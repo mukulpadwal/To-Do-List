@@ -1,11 +1,10 @@
 // This part of the code contains importing all the necessary libraries that will be used in our to-do list project
 const express = require("express");
 const bodyParser = require("body-parser");
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
-// Here we are creating some empty arrays so that we can store the tasks that the user has entered in our app
-var items = [];
-var workItems = [];
+// Here we are creating a connection to mongodb
+mongoose.connect("mongodb://127.0.0.1:27017/todolistDB");
 
 // Here we are creating a constant named app so that we can use it to to create our backend using express
 const app = express();
@@ -21,6 +20,22 @@ app.use(bodyParser.urlencoded({
 // Here we are telling that our server to look for all static files in the folder named public
 app.use(express.static("public"));
 
+// Here we are creating a schema
+const itemsSchema = new mongoose.Schema({
+    name: String
+});
+
+// Here we are creating a model
+const Item = mongoose.model("Item", itemsSchema);
+
+// Creating the initial few entries
+const item1 = new Item({name: "Welcome to the To Do List app"});
+const item2 = new Item({name: "Hit on the + button to add a new task"});
+const item3 = new Item({name: "<-- Hit this to delete an item"});
+
+// Inserting the default items
+
+
 // We are creating a get request for the home route
 app.get("/", function (req, res){
 
@@ -32,19 +47,36 @@ app.get("/", function (req, res){
     }
     var day = date.toLocaleDateString("en-US", options);
 
-    res.render("list",{listTitle: day, newListItems: items});
+    Item.find({}, function (err, items){
+
+        if(items.length === 0){
+            Item.insertMany([item1, item2, item3], function (err){
+                if (err){
+                    console.log(err);
+                } else {
+                    console.log("Successfully added the default items into the database.");
+                }
+            });
+            
+            res.redirect("/");
+        } else {
+            res.render("list",{listTitle: day, newListItems: items});
+        }
+    });
+
+    
 });
 
 app.post("/", function (req, res){
     
-    var item = req.body.newTask;
-    if(req.body.button === "Work"){
-        workItems.push(item);
-        res.redirect("/work");
-    } else {
-        items.push(item);
-        res.redirect("/");
-    }
+    const itemName = req.body.newTask;
+
+    const item = new Item({name:itemName});
+
+    item.save();
+
+    res.redirect("/");
+
 })
 
 app.get("/work", function (req, res){
@@ -54,6 +86,21 @@ app.get("/work", function (req, res){
 app.get("/about", function (req, res){
     res.render("about");
 })
+
+app.post("/delete", function (req, res){
+    const id = req.body.checkedItem;
+
+    Item.findByIdAndRemove(id , function (err){
+        if(err){
+            console.log(err);
+        } else {
+            console.log("Successfully deleted the item.");
+        }
+    });
+
+    res.redirect("/");
+
+});
 
 app.listen(3000, function (){
     console.log("Server is up and running on port 3000...");
