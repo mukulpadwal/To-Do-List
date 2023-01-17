@@ -4,7 +4,7 @@ const bodyParser = require("body-parser");
 const mongoose = require('mongoose');
 
 // Here we are creating a connection to mongodb
-mongoose.connect("mongodb://127.0.0.1:27017/todolistDB");
+mongoose.connect("mongodb+srv://admin-mukul:Test-123@cluster0.ol2bz49.mongodb.net/todolistDB");
 
 // Here we are creating a constant named app so that we can use it to to create our backend using express
 const app = express();
@@ -122,5 +122,5 @@ app.post("/delete", function (req, res){
 });
 
 app.listen(process.env.PORT || 3000, function (){
-    console.log("Server is up and running on port 3000...");
+    console.log("Server is up and running...");
 });
