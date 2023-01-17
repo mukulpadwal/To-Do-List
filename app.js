@@ -25,15 +25,22 @@ const itemsSchema = new mongoose.Schema({
     name: String
 });
 
+const listSchema = new mongoose.Schema({
+    name: String,
+    items: [itemsSchema]
+});
+
 // Here we are creating a model
 const Item = mongoose.model("Item", itemsSchema);
+
+const List = mongoose.model("List", listSchema);
 
 // Creating the initial few entries
 const item1 = new Item({name: "Welcome to the To Do List app"});
 const item2 = new Item({name: "Hit on the + button to add a new task"});
 const item3 = new Item({name: "<-- Hit this to delete an item"});
 
-// Inserting the default items
+const defaultItems = [item1, item2, item3];
 
 
 // We are creating a get request for the home route
@@ -50,7 +57,7 @@ app.get("/", function (req, res){
     Item.find({}, function (err, items){
 
         if(items.length === 0){
-            Item.insertMany([item1, item2, item3], function (err){
+            Item.insertMany(defaultItems, function (err){
                 if (err){
                     console.log(err);
                 } else {
@@ -67,6 +74,20 @@ app.get("/", function (req, res){
     
 });
 
+app.get("/:customListName", function (req, res){
+    const customListName = req.params.customListName;
+
+    List.find({}, function (err, lists){
+        if(lists[0].name === customListName){
+            res.render("list",{listTitle: lists[0].name, newListItems: lists[0].items});
+        } else {
+            res.render("list",{listTitle: lists[0].name, newListItems: lists[0].items});
+        }
+    });
+
+
+});
+
 app.post("/", function (req, res){
     
     const itemName = req.body.newTask;
@@ -79,9 +100,7 @@ app.post("/", function (req, res){
 
 })
 
-app.get("/work", function (req, res){
-    res.render("list", {listTitle: "Work List", newListItems: workItems});
-});
+
 
 app.get("/about", function (req, res){
     res.render("about");
@@ -102,6 +121,6 @@ app.post("/delete", function (req, res){
 
 });
 
-app.listen(3000, function (){
+app.listen(process.env.PORT || 3000, function (){
     console.log("Server is up and running on port 3000...");
 });
